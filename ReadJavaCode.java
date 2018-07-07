@@ -1,4 +1,4 @@
-package io.addlog;
+package test;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,415 +10,522 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.logging.LogFactory;
+
 public class ReadJavaCode {
 
-	private Boolean removelog =false;//ÒÆ³ı×Ô¶¨ÒåÈÕÖ¾
-	
-	private String className;// ÀàÃû
-	private String path;// È«Â·¾¶
-	private String loggername = null;
-	private int importStringIndex = 0 ;
-	private String[] matchs = new String[] { ".log4j.", "public interface", "Logger " ,"class "," Log "};
-	/**
-	 * 
-	 * @param name ÀàÃû
-	 * @param fullpath È«Â·¾¶
-	 * @param removelog ÊÇ·ñÉ¾³ıÈÕÖ¾
-	 */
-	public ReadJavaCode(String name, String fullpath ,Boolean removelog) {
-		this.className = name.substring(0, name.indexOf(".java"));
-		this.path = fullpath;
-		this.removelog = removelog;
-	}
+    private Boolean removelog =false;//ç§»é™¤è‡ªå®šä¹‰æ—¥å¿—
+    
+    private String className;// ç±»å
+    private String path;// å…¨è·¯å¾„
+    private String loggername = null;
+    private int importStringIndex = 0 ;
+    private String[] matchs = new String[] { ".log4j.", "interface ", "Logger " ,"class "," Log "," enum "};
+    /**
+     * 
+     * @param name ç±»å
+     * @param fullpath å…¨è·¯å¾„
+     * @param removelog æ˜¯å¦åˆ é™¤æ—¥å¿—
+     */
+    public ReadJavaCode(String name, String fullpath ,Boolean removelog) {
+        this.className = name.substring(0, name.indexOf(".java"));
+        this.path = fullpath;
+        this.removelog = removelog;
+    }
 
-	/**
-	 * ÊÇ·ñÊÇ½Ó¿Ú
-	 * 
-	 * @param line
-	 * @return
-	 */
-	private boolean isInterface(String line) {
-		return line == null ? false : line.indexOf(matchs[1]) > -1;
-	}
+    /**
+     * æ˜¯å¦æ˜¯æ¥å£
+     * æ˜¯å¦æ˜¯æšä¸¾ç±»å‹
+     * 
+     * @param line
+     * @return
+     */
+    private boolean isInterface(String line) {
+        boolean inter = line == null ? false : line.indexOf(matchs[1]) > -1;
+        boolean enu = line == null ? false : line.indexOf(matchs[5]) > -1;
+        return inter || enu;
+    }
 
-	/**
-	 * ÊÇ·ñÒÑ¾­¶¨Òå¹ıLogger¶ÔÏó
-	 * 
-	 * @param line
-	 * @return
-	 */
-	private boolean hasDefineLogger(String line) {
-		if(line != null && (line.indexOf(matchs[2]) > -1 || line.indexOf(matchs[4]) > -1)
-				    && line.indexOf("=") > -1 
-					&& !line.startsWith("//")
-					&& !line.startsWith("*")
-					&& !line.startsWith("/*")) {
-			return true;
-		}
-		return false;	
-	}
-	
-	
-	public static void main(String[] args) {
-		
-		ReadJavaCode r = new ReadJavaCode("ssss.java", "ssss.java" ,true );
-		String line = "/** Logger available to subclasses */";
-		boolean hasDefine = r.hasDefineLogger(line);
-		System.out.println(hasDefine);
-		
-	}
+    /**
+     * æ˜¯å¦å·²ç»å®šä¹‰è¿‡Loggerå¯¹è±¡
+     * 
+     * @param line
+     * @return
+     */
+    private boolean hasDefineLogger(String line) {
+        if(line != null && (line.indexOf(matchs[2]) > -1 || line.indexOf(matchs[4]) > -1)
+                    && line.indexOf("=") > -1 
+                    && !line.startsWith("//")
+                    && !line.startsWith("*")
+                    && !line.startsWith("/*")) {
+            
+            return true;
+        }
+        return false;   
+    }
+    
+    
+    public static void main(String[] args) {
+        
+        ReadJavaCode r = new ReadJavaCode("ssss.java", "ssss.java" ,true );
+        String line = "/** Logger available to subclasses */";
+        boolean hasDefine = r.hasDefineLogger(line);
+        System.out.println(hasDefine);
+        
+    }
 
-	/**
-	 * »ñÈ¡ÒÑ¾­¶¨Òå¹ıµÄlogger Ãû×Ö
-	 * 
-	 * @param line
-	 * @return
-	 */
-	private void getLoggerObj(String line) {
-		
-		if(loggername == null && hasDefineLogger(line) ) {
-			//"Logger log = " È¡ log
-			//"Log log = " È¡ log
-			String name = "";
-			if(line.indexOf(matchs[2]) > -1) {
-				name = line.substring(line.indexOf(matchs[2]) + 8, line.indexOf("="));
-			}else if(line.indexOf(matchs[4]) > -1) {
-				name = line.substring(line.indexOf(matchs[4]) + 5, line.indexOf("="));
-			}
+    /**
+     * è·å–å·²ç»å®šä¹‰è¿‡çš„logger åå­—
+     * 
+     * @param line
+     * @return
+     */
+    private String  getLoggerObj(String line) {
+        
+        if(loggername == null && hasDefineLogger(line) ) {
+            //"Logger log = " å– log
+            //"Log log = " å– log
+            String name = "";
+            if(line.indexOf(matchs[2]) > -1) {
+                name = line.substring(line.indexOf(matchs[2]) + 8, line.indexOf("="));
+            }else if(line.indexOf(matchs[4]) > -1) {
+                name = line.substring(line.indexOf(matchs[4]) + 5, line.indexOf("="));
+            }
 
-			loggername = name.trim();
-		}
-	}
+            loggername = name.trim();
+            //ç»Ÿä¸€logæ ¼å¼,final
+            if(line.indexOf( "static" ) == -1){
+                line = line.replace( "final", "static final" );
+            }
+ 
+            line = line.replace( "getClass()", className+".class" );
+        }
+        return line;
+    }
 
-	/**
-	 * ÔÚµÚÒ»¸ö·½·¨µÄÉÏÃæÒ»ĞĞ´´½¨ logger¶ÔÏó
-	 */
-	private String createLogObj() {			
-		
-		return "private static final Logger customLogger = (Logger) LogManager.getLogger("+className+".class.getName());";
-	}
-	
-	
-	/**
-	 * ×îºóÉú³ÉµÄ×Ö·û´® ĞÎÈç: Ä³Ä³ÀàµÚNĞĞ
-	 * 
-	 * @param linenum
-	 * @return
-	 */
-	private String logString() {	
-		if(loggername == null ) {
-			return "customLogger".concat(".trace(\""+ className+"µÚ{n}ĞĞ......"+"\");");
-		}
-		return loggername.concat(".trace(\""+ className+"µÚ{n}ĞĞ......"+"\");");
-	}
+    /**
+     * åœ¨ç¬¬ä¸€ä¸ªæ–¹æ³•çš„ä¸Šé¢ä¸€è¡Œåˆ›å»º loggerå¯¹è±¡
+     */
+    private String createLogObj() {         
+        
+        return "private static final Logger customLogger = (Logger) LogManager.getLogger("+className+".class.getName());";
+    }
+    
+    
+    /**
+     * æœ€åç”Ÿæˆçš„å­—ç¬¦ä¸² å½¢å¦‚: æŸæŸç±»ç¬¬Nè¡Œ
+     * 
+     * @param linenum
+     * @return
+     */
+    private String logString() {    
+        if(loggername == null ) {
+            return "customLogger".concat(".trace(\""+ className+"ç¬¬{n}è¡Œ......"+"\");");
+        }
+        return loggername.concat(".trace(\""+ className+"ç¬¬{n}è¡Œ......"+"\");");
+    }
 
-	/**
-	 * ½«·½·¨¶ÁÈ¡
-	 * 
-	 * @return
-	 */
-	private List<String> read() {
-		BufferedReader br = null;
-		List<String> result = new LinkedList<String>();
-		try {
-			br = new BufferedReader(new FileReader(path));
-			String line = null;
-			while ( (line = br.readLine()) != null) {
+    /**
+     * å°†æ–¹æ³•è¯»å–
+     * 
+     * @return
+     */
+    private List<String> read() {
+        BufferedReader br = null;
+        List<String> result = new LinkedList<String>();
+        try {
+            br = new BufferedReader(new FileReader(path));
+            String line = null;
+            while ( (line = br.readLine()) != null) {
 
-				if (line != null && line.length() > 0 ) {
-					try {
-						if(isInterface(line)) {
-							br.close();					
-							return null;
-						}
-						getLoggerObj(line);//»ñÈ¡µ±Ç°Àà ÈÕÖ¾¶ÔÏó,Èç¹ûÒÑ¾­»ñÈ¡ÁËÔò²»ÔÚ»ñÈ¡¡£	
-						setImportStringIndex(line,result.size());//»ñÈ¡"import*"ĞĞºÅ
-						result.add(line);	
-					} catch (Exception e) {
-						System.out.println(line);
-						e.printStackTrace();
-					}
-								
-				}				
+                if (line != null && line.length() > 0 ) {
+                    try {
+                        if(isInterface(line)) {
+                            br.close();                 
+                            return null;
+                        }
+                        line = getLoggerObj(line);//è·å–å½“å‰ç±» æ—¥å¿—å¯¹è±¡,å¦‚æœå·²ç»è·å–äº†åˆ™ä¸åœ¨è·å–ã€‚   
+                        setImportStringIndex(line,result.size());//è·å–"import*"è¡Œå·
+                        result.add(line);   
+                    } catch (Exception e) {
+                        System.out.println(line);
+                        e.printStackTrace();
+                    }
+                                
+                }               
 
-				
-			}						
-		} catch (FileNotFoundException e) {
+                
+            }                       
+        } catch (FileNotFoundException e) {
 
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if(br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		if(removelog) {
-			result = removeLog(result);
-		}else {
-			result = addLog(result);//½«Ã¿Ò»ĞĞ¶Áµ½result,È»ºó¸øÆäÖĞµÄ·½·¨Ìí¼Ó log
-		}
-		
-		
-		return result;
-	}
-	
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if(br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if(removelog) {
+            result = removeLog(result);
+        }else {
+            result = addLog(result);//å°†æ¯ä¸€è¡Œè¯»åˆ°result,ç„¶åç»™å…¶ä¸­çš„æ–¹æ³•æ·»åŠ  log
+            //äºŒæ¬¡å¤„ç†æ•°æ®,äº¤æ¢ä½ç½®
+            result = swapLocation(result);
+        }
+        
+        //å»æ‰æ–¹æ³•èµ·å§‹ç»“æŸçš„æ ‡è¯†
+        clearFlag(result);
+        
+        return result;
+    }
+    
+    /**
+     * logä¸èƒ½æ‰“åœ¨returnå‰é¢,å¦‚æœæ–¹æ³•é‡Œé¢æœ‰return,åˆ™å°†logæ‰“åœ¨æ–¹æ³•å†…ç¬¬ä¸€è¡Œ
+     * @param result
+     * @return
+     */
+    private List<String> swapLocation( List<String> result )
+    {
+        String line;
+        String preLine;
+        int startIndex = 0;
+        
+        for ( int i = 0; i < result.size(); i++ )
+        {
+            line = result.get( i );
+            if(line.indexOf( "methodStartLine" ) > -1){
+                startIndex = i + 1 ;
+            }
+            
+            if(line.indexOf( ".trace(" ) > -1){
+                
+                for ( int j = (i-1); j >0 ; j-- )
+                {
+                    preLine = result.get( j );
+                    if(preLine.indexOf( "methodStartLine" ) > -1){
+                        break;
+                    }
+                    if(preLine.indexOf( " return " )>-1 
+                            && !preLine.startsWith( "*" )){
+                        result.remove( i );
+                        result.add( startIndex, line );
+                        break;
+                    }                    
+                }
+            }
+        }
+        return result;
+    }
 
+    /**
+     * å»æ‰æ–¹æ³•èµ·å§‹è¡Œçš„æ ‡è¯†
+     * methodStartLine
+     * methodEndLine
+     * @param result
+     */
+    private void clearFlag( List<String> result )
+    {
+        if(result == null || result.size() == 0){
+            return;
+        }
+        String line;
+        String temp;
+        for ( int i = 0; i < result.size(); i++ )
+        {
+            line = result.get( i );
+            if(line.indexOf( "methodStartLine" ) > -1 
+                    || line.indexOf( "methodEndLine" ) > -1){
+                temp = line.replace( "methodStartLine" , "" );
+                temp = temp.replace( "methodEndLine" , "" );
+                result.set( i, temp );//String å¯¹è±¡
+            }
+        }
+    }
 
-	private void setImportStringIndex(String line, int size) {
-		if(importStringIndex != 0) {
-			return;
-		}
-		if(line.indexOf("import ") > -1 || line.indexOf("package ") > -1) {
-			importStringIndex = size + 1;
-		}
-	}
-	/**
-	 * ÒÆ³ıÈÕÖ¾
-	 * @param result
-	 * @return
-	 */
-	private List<String> removeLog(List<String> result) {
-		String line = null;
-		String logObj = createLogObj();
-		for (int i = result.size() -1 ; i >= 0 ; i--) {
-			line= result.get(i);
-			if(line.indexOf("customLogger.trace") > -1 
-					|| line.indexOf(loggername + ".trace(\"" + className) > -1 
-					|| line.indexOf("import org.apache.log4j.*;") > -1  
-					|| line.indexOf(logObj) > -1  ) {
-				result.remove(line);
-			}
-		}
-		return result;
-	}
-	
-	
-	/**
-	 * ¸ø·½·¨Ìí¼Ólog
-	 * @param result
-	 * @return
-	 */
-	private List<String> addLog(List<String> result) {
-		
-		if(result == null || result.size() ==0 ) return null;
-		
-		List<Integer> methodIndex =getIndexOfMethod2(result);//´æ·½·¨µÄ×ø±ê
-				
-		if(methodIndex == null || methodIndex.size() == 0) {
-			return result;
-		}	
-		
-		int pre = 0;//Î»ÖÃÆ«ÒÆÁ¿
-		
-		for (int i = 0,j= methodIndex.size(); i < j; i++) {
-			
-			pre = (i+1);
-			String log = logString();				
-			
-			log = spaceLog(log,result, methodIndex, pre, i , true);	//true±íÊ¾µ±Ç°ĞĞ¼ÓÉÏ ¿Õ¸ñ				
-			result.add(methodIndex.get(i) + pre  , log);
-		}
-		
-		importPackageAndNewLogobj(result, methodIndex);//ÒıÈëlog °ü
-		setLogLineNum(result);//¸øresult ÉèÖÃĞĞºÅ
-		return result;
-	}
+    
+    /**
+     * æ‰¾åˆ°å½“å‰æ–¹æ³•æœ€åä¸€è¡Œm
+     * methodStartLine
+     * methodEndLine
+     * @param result
+     * @param i
+     * @return
+     */
+    private int getMethodLastLine( List<String> result, int i )
+    {
+        
+        String line;
+        for ( int j = (i + 1); j < result.size(); j++ )
+        {
+            line =  result.get( j );
+            if(line.indexOf( "methodEndLine" ) > -1){
+                return j-1;
+            }
+        }
+        return 0;
+    }
 
-	private void importPackageAndNewLogobj(List<String> result, List<Integer> methodIndex) {
-		if(loggername == null) {
-		
-			String line = result.get(result.size()-2);//µ¹ÊıµÚ2ĞĞµÄ³¤¶È
-			String temp = line.substring(0, line.indexOf(line.trim()));
-			
-			//ÔÚÀàµÄ×îºóÒ»ĞĞÌí¼Ó
-			String logObjline = createLogObj();		
-			result.add(result.size() -1   , temp + logObjline);
-			
-			//ÔÚÀà importµÄµØ·½ µ¼Èëlog4jĞèÒªµÄjar°ü
-			String importlog = "import org.apache.log4j.*;";
-			
-			if(result.get(3).indexOf("import ") > -1) {
-				result.add(3, importlog);
-			}else {
-				//Èç¹ûµÚ3ĞĞ²»ÊÇ import¿ªÍ·
-				result.add(importStringIndex, importlog);
-			}
-			
-		}
-	}
+    private void setImportStringIndex(String line, int size) {
+        if(importStringIndex != 0) {
+            return;
+        }
+        if(line.indexOf("import ") > -1 || line.indexOf("package ") > -1) {
+            importStringIndex = size + 1;
+        }
+    }
+    /**
+     * ç§»é™¤æ—¥å¿—
+     * @param result
+     * @return
+     */
+    private List<String> removeLog(List<String> result) {
+        String line = null;
+        String logObj = createLogObj();
+        for (int i = result.size() -1 ; i >= 0 ; i--) {
+            line= result.get(i);
+            if(line.indexOf("customLogger.trace") > -1 
+                    || line.indexOf(loggername + ".trace(\"" + className) > -1 
+                    || line.indexOf("import org.apache.log4j.*;") > -1  
+                    || line.indexOf(logObj) > -1  ) {
+                result.remove(line);
+            }
+        }
+        return result;
+    }
+    
+    
+    /**
+     * ç»™æ–¹æ³•æ·»åŠ log
+     * @param result
+     * @return
+     */
+    private List<String> addLog(List<String> data) {
+        
+        if(data == null || data.size() ==0 ) return null;
+        
+        List<Integer> methodIndex =setIndexOfMethod2(data);//å­˜æ–¹æ³•çš„åæ ‡
+        if(methodIndex == null || methodIndex.size() == 0) {
+            return data;
+        }   
+        
+        String line ;
+        String log = logString(); 
+        String temp;
+        List<String> result = new ArrayList<String>();
+        for ( int i = 0 ; i < data.size(); i++ )
+        {
+            line = data.get( i );
+            if(line.indexOf( "methodEndLine" ) > -1){                       
+                temp = spaceLog(log,data, i-1 , true); //trueè¡¨ç¤ºå½“å‰è¡ŒåŠ ä¸Š ç©ºæ ¼         
+                result.add( temp );
+            }
+            result.add( line );            
+        }
+        
+        importPackageAndNewLogobj(result);//å¼•å…¥log åŒ…
+        setLogLineNum(result);//ç»™result è®¾ç½®è¡Œå·
+        return result;
+    }
 
-	private void setLogLineNum(List<String> result) {
-		//¸ølogÈÕÖ¾´øÉÏĞĞºÅ
-		String line;
-		for (int i = 0,j = result.size(); i < j; i++) {
-			line = result.get(i);
-			if( line.indexOf("µÚ{n}ĞĞ")> -1) {				
-				result.set(i, line.replace("{n}", i+1+"" ));
-			}
-		}
-	}
-	
-	
-	
-	
-	/**
-	 * {
-	 * 		logger.trace
-	 * 	{
-	 * 		logger.trace
-	 * 		{
-	 * 		logger.trace
-	 * 		}	
-	 * 	}
-	 * }
-	 * Âú×ã¶Ô³ÆµÄ{}½á¹¹ÔòÎª·½·¨,Èç¹û { µÄ¸öÊı == }µÄ¸öÊı
-	 * µ±Ç°·½·¨ÊÊºÏ¸øÃ¿Ò»¸ö{}½á¹¹Ôö¼ÓÒ»¸ölogger
-	 */
-	private List<Integer> getIndexOfMethod(List<String> result) {
-		
-		List<Integer> methodIndex = new ArrayList<Integer>();//´æ·½·¨µÄ×ø±ê
+    private void importPackageAndNewLogobj(List<String> result) {
+        if(loggername == null) {
+        
+            String line = result.get(result.size()-2);//å€’æ•°ç¬¬2è¡Œçš„é•¿åº¦
+            String temp = line.substring(0, line.indexOf(line.trim()));
+            
+            //åœ¨ç±»çš„æœ€åä¸€è¡Œæ·»åŠ 
+            String logObjline = createLogObj();     
+            result.add(result.size() -1   , temp + logObjline);
+            
+            //åœ¨ç±» importçš„åœ°æ–¹ å¯¼å…¥log4jéœ€è¦çš„jaråŒ…
+            String importlog = "import org.apache.log4j.*;";
+            
+            if(result.get(3).indexOf("import ") > -1) {
+                result.add(3, importlog);
+            }else {
+                //å¦‚æœç¬¬3è¡Œä¸æ˜¯ importå¼€å¤´
+                result.add(importStringIndex, importlog);
+            }
+            
+        }
+    }
 
-		int index = 0;//µ±Ç°·½Ê½µÄÎ»ÖÃ
-		int numS   = 0;//Í³¼Æ {µÄ¸öÊı
-		int numE   = 0;//Í³¼Æ }µÄ¸öÊı
-		String line = null;
-		for (int i = 0,j= result.size(); i < j; i++) {
-			line = result.get(i);
+    private void setLogLineNum(List<String> result) {
+        //ç»™logæ—¥å¿—å¸¦ä¸Šè¡Œå·
+        String line;
+        for (int i = 0,j = result.size(); i < j; i++) {
+            line = result.get(i);
+            if( line.indexOf("ç¬¬{n}è¡Œ")> -1) {                
+                result.set(i, line.replace("{n}", i+1+"" ));
+            }
+        }
+    }
+    
+    
+    
+    
+    /**
+     * {
+     *      logger.trace
+     *  {
+     *      logger.trace
+     *      {
+     *      logger.trace
+     *      }   
+     *  }
+     * }
+     * æ»¡è¶³å¯¹ç§°çš„{}ç»“æ„åˆ™ä¸ºæ–¹æ³•,å¦‚æœ { çš„ä¸ªæ•° == }çš„ä¸ªæ•°
+     * å½“å‰æ–¹æ³•é€‚åˆç»™æ¯ä¸€ä¸ª{}ç»“æ„å¢åŠ ä¸€ä¸ªlogger
+     */
+    private List<Integer> getIndexOfMethod(List<String> result) {
+        
+        List<Integer> methodIndex = new ArrayList<Integer>();//å­˜æ–¹æ³•çš„åæ ‡
 
-			if("{".equals(line.charAt(line.length()-1) + "" ) && (line.indexOf(matchs[3]) == -1) ) {
-				//×îºóÒ»¸ö×Ö·û´®Îª { 
-				numS++ ;
-				if(index == 0 ) {
-					index = i;
-				}
-				
-			}else if(numS == (numE+1) ) {
-				methodIndex.add(index);
-				//ÖØÖÃ
-				numS = numE = index= 0;								
-			}			
-		}
-		return methodIndex;
-	}
-	
-	/**
-	 * {
-	 * 		logger.trace
-	 * 	{
-	 * 		{}	
-	 * 	}
-	 * }
-	 * Âú×ã¶Ô³ÆµÄ{}½á¹¹ÔòÎª·½·¨,Èç¹û { µÄ¸öÊı == }µÄ¸öÊı
-	 * µ±Ç°·½·¨ÊÊºÏ£º Ö»ÔÚµÚÒ»¸ö{}Ğ´Èëlogger
-	 */
-	private List<Integer> getIndexOfMethod2(List<String> result) {
-		
-		List<Integer> methodIndex = new ArrayList<Integer>();//´æ·½·¨µÄ×ø±ê
+        int index = 0;//å½“å‰æ–¹å¼çš„ä½ç½®
+        int numS   = 0;//ç»Ÿè®¡ {çš„ä¸ªæ•°
+        int numE   = 0;//ç»Ÿè®¡ }çš„ä¸ªæ•°
+        String line = null;
+        for (int i = 0,j= result.size(); i < j; i++) {
+            line = result.get(i);
 
-		int index = 0;//µ±Ç°·½Ê½µÄÎ»ÖÃ
-		int numS   = 0;//Í³¼Æ {µÄ¸öÊı
-		int numE   = 0;//Í³¼Æ }µÄ¸öÊı
-		String line = null;
-		for (int i = 0,j= result.size(); i < j; i++) {
-			line = result.get(i);
-			if(line.indexOf("*") > -1) {
-				continue;
-			}
+            if("{".equals(line.charAt(line.length()-1) + "" ) && (line.indexOf(matchs[3]) == -1) ) {
+                //æœ€åä¸€ä¸ªå­—ç¬¦ä¸²ä¸º { 
+                numS++ ;
+                if(index == 0 ) {
+                    index = i;
+                }
+                
+            }else if(numS == (numE+1) ) {
+                methodIndex.add(index);
+                //é‡ç½®
+                numS = numE = index= 0;                             
+            }           
+        }
+        return methodIndex;
+    }
+    
+    /**
+     * {
+     *      logger.trace
+     *  {
+     *      {}  
+     *  }
+     * }
+     * æ»¡è¶³å¯¹ç§°çš„{}ç»“æ„åˆ™ä¸ºæ–¹æ³•,å¦‚æœ { çš„ä¸ªæ•° == }çš„ä¸ªæ•°
+     * å½“å‰æ–¹æ³•é€‚åˆï¼š åªåœ¨ç¬¬ä¸€ä¸ª{}å†™å…¥logger
+     */
+    private List<Integer> setIndexOfMethod2(List<String> result) {
+        
+        List<Integer> methodIndex = new ArrayList<Integer>();//å­˜æ–¹æ³•çš„åæ ‡
 
-			if(line.indexOf("{") > -1 && line.indexOf("}") > -1 ) {
-				//Èç¹û{}ÎªÍ¬Ò»ĞĞ
-				numS++ ;
-				numE++;
-			}
-			else if("{".equals(line.charAt(line.length()-1) + "" ) 
-					&& i != 0
-					&& (line.indexOf(matchs[3]) == -1) 
-					&& result.get(i-1).indexOf(matchs[3]) == -1 ) {
-				//×îºóÒ»¸ö×Ö·û´®Îª { 
-				numS++ ;
-				if(index == 0 ) {
-					index = i;
-				}
-				
-			}else if(numS == (numE+1) && "}".equals(line.charAt(line.length()-1) + "" )) {
-				methodIndex.add(index);
-				//ÖØÖÃ
-				numS = numE = index= 0;				
-				
-			}else if("}".equals(line.charAt(line.length()-1) + "" ) 
-					|| (line.indexOf("}") > -1 && line.indexOf("\"") == -1)) {
-				//×îºóÒ»¸ö×Ö·û´®Îª }
-				if(numS > 0) {
-					numE++;
-				}
-			}			
-		}
-		return methodIndex;
-	}
-	
-	
-	/**
-	 * log×Ö·û´®Óëµ±Ç°ĞĞ¶ÔÆë
-	 * @param result
-	 * @param methodIndex
-	 * @param pre
-	 * @param i
-	 * @return
-	 */
-	private String spaceLog(String log, List<String> result, List<Integer> methodIndex, int pre, int i,
-			boolean isSpace) {
+        int index = 0;//å½“å‰æ–¹å¼çš„ä½ç½®
+        int numS   = 0;//ç»Ÿè®¡ {çš„ä¸ªæ•°
+        int numE   = 0;//ç»Ÿè®¡ }çš„ä¸ªæ•°
+        String line = null;
+        for (int i = 0,j= result.size(); i < j; i++) {
+            line = result.get(i);
+            if(line.indexOf("*") > -1) {
+                continue;
+            }
 
-		if (!isSpace) {
-			return log;
-		}	
-		String line = result.get(methodIndex.get(i) + pre);
-		String temp = line.substring(0, line.indexOf(line.trim()));
+            if(line.indexOf("{") > -1 && line.indexOf("}") > -1 ) {
+                //å¦‚æœ{}ä¸ºåŒä¸€è¡Œ
+                numS++ ;
+                numE++;
+            }
+            else if("{".equals(line.charAt(line.length()-1) + "" ) 
+                    && i != 0
+                    && (line.indexOf(matchs[3]) == -1) 
+                    && result.get(i-1).indexOf(matchs[3]) == -1 ) {
+                //æœ€åä¸€ä¸ªå­—ç¬¦ä¸²ä¸º { 
+                numS++ ;
+                if(index == 0 ) {
+                    index = i;
+                    line = line + "methodStartLine";//æ ‡è¯†æ–¹æ³•èµ·å§‹è¡Œ
+                    result.set( i, line );
+                }
+                
+            }else if(numS == (numE+1) && "}".equals(line.charAt(line.length()-1) + "" )) {
+                methodIndex.add(index);
+                //é‡ç½®
+                numS = numE = index= 0;             
+                line = line + "methodEndLine";//æ ‡è¯†æ–¹æ³•ç»“æŸè¡Œ
+                result.set( i, line );
+                
+            }else if("}".equals(line.charAt(line.length()-1) + "" ) 
+                    || (line.indexOf("}") > -1 && line.indexOf("\"") == -1)) {
+                //æœ€åä¸€ä¸ªå­—ç¬¦ä¸²ä¸º }
+                if(numS > 0) {
+                    numE++;
+                }
+            }           
+        }
+        return methodIndex;
+    }
+    
+    
+    /**
+     * logå­—ç¬¦ä¸²ä¸å½“å‰è¡Œå¯¹é½
+     * @param result
+     * @param methodIndex
+     * @param pre
+     * @param i
+     * @return
+     */
+    private String spaceLog(String log, List<String> result, int i,
+            boolean isSpace) {
 
-		return temp + log;
-	}
-	
-	/**
-	 * 1ĞĞ1ĞĞµÄĞ´Èë
-	 * 
-	 * @param result
-	 */
-	private void write(List<String> result) {
-		if (result == null || result.size() == 0)
-			return;
+        if (!isSpace) {
+            return log;
+        }   
+        String line = result.get(i);
+        String temp = line.substring(0, line.indexOf(line.trim()));
 
-		BufferedWriter bufferedWriter = null;
-		try {
-			bufferedWriter = new BufferedWriter(new FileWriter(path));
-			for (String string : result) {
-				bufferedWriter.write(string);
-				bufferedWriter.newLine();// »»ĞĞ
-			}
-			bufferedWriter.flush();
-			bufferedWriter.close();
-			System.out.println("ÒÑÍê³É" + path);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (bufferedWriter != null) {
-				try {
-					bufferedWriter.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	}
+        return temp + log;
+    }
+    
+    /**
+     * 1è¡Œ1è¡Œçš„å†™å…¥
+     * 
+     * @param result
+     */
+    private void write(List<String> result) {
+        if (result == null || result.size() == 0)
+            return;
 
-	/**
-	 * ¶ÁĞ´
-	 */
-	public void init() {
-		write(read());
-	}
+        BufferedWriter bufferedWriter = null;
+        try {
+            bufferedWriter = new BufferedWriter(new FileWriter(path));
+            for (String string : result) {
+                bufferedWriter.write(string);
+                bufferedWriter.newLine();// æ¢è¡Œ
+            }
+            bufferedWriter.flush();
+            bufferedWriter.close();
+            System.out.println("å·²å®Œæˆ" + path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (bufferedWriter != null) {
+                try {
+                    bufferedWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * è¯»å†™
+     */
+    public void init() {
+        write(read());
+    }
 
 }
